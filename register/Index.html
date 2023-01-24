@@ -18,69 +18,6 @@
     ></script>
   </head>
   <body>
-    <style>
-      body {
-        background-image: url("https://mpdw-mail-resources.s3.ap-southeast-1.amazonaws.com/lucky-bg.jpg");
-        /* Full height */
-        height: 100%;
-
-        /* Center and scale the image nicely */
-        background-position: top -100px right 50%;
-        background-repeat: repeat;
-        background-size: cover;
-
-        /* front-color */
-        color: #a91d1f;
-      }
-
-      body h1 {
-        font-size: 28px;
-      }
-
-      .ticket {
-        width: 900px !important;
-        height: 250px !important;
-
-        border: 0px solid #02012b;
-        background-image: linear-gradient(180deg, #fbdea7, #facb5b);
-      }
-
-      #gong-xi-fa-cai {
-        width: 100px;
-      }
-
-      #front-img {
-        width: 322px;
-        border-radius: 4px;
-      }
-
-      #ticket-details {
-        position: absolute;
-        top: 10%;
-        left: 18%;
-      }
-
-      #lucky-cover {
-        width: 800px;
-      }
-
-      #ticket-back {
-        color: #fae59f;
-      }
-
-      #ticket-rule-container {
-        width: 800px;
-        height: 250px;
-
-        background-image: linear-gradient(
-          to right,
-          #ba141f,
-          #db1215,
-          #ce141a,
-          #b01d20
-        );
-      }
-    </style>
     <div id="ticket-container" class="container-fluid">
       <div
         id="ticket-details"
@@ -95,9 +32,10 @@
             <div class="d-flex flex-column align-items-center" id="lucky-cover">
               <h2 class="mt-4">Lucky Draw Ticket</h2>
 
-              <h1>(chao.wu)</h1>
+              <? var user = register(); ?>
+              <h1>(<?!= user.username ?>)</h1>
 
-              <h1 class="mt-4" style="font-size: 40px">Lucky Number: 1326</h1>
+              <h1 class="mt-4" style="font-size: 40px">Lucky Number: <?!= user.hash  ?></h1>
 
               <h5 class="mt-1">Draw Day: 30 January 2023</h5>
             </div>

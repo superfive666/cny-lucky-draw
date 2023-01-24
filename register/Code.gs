@@ -42,7 +42,7 @@ function register() {
   const hash = getHash(id);
   console.log(`${username} registered with number: ${hash}`)
 
-  return hash;
+  return {username, hash};
 }
 
 function fetchParticipants() {
