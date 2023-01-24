@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <base target="_top">
+    <base target="_top" />
     <!-- Required meta tags -->
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -18,16 +18,128 @@
     ></script>
   </head>
   <body>
-    <?!= include('Stylesheet'); ?>
-    <?!= include('Confetti'); ?>
-    <?!= include('Script'); ?>
-    <div>
-    <?
-      var individuals = fetchParticipants();
-      for (var i = 0; i < individuals.length; i++) { ?>
-      <p><?!= individuals[i].id + ': ' + individuals[i].username ?></p>
-      <br/>
-    <? } ?>
+    <style>
+      body {
+        background-image: url("https://mpdw-mail-resources.s3.ap-southeast-1.amazonaws.com/lucky-bg.jpg");
+        /* Full height */
+        height: 100%;
+
+        /* Center and scale the image nicely */
+        background-position: top -100px right 50%;
+        background-repeat: repeat;
+        background-size: cover;
+
+        /* front-color */
+        color: #a91d1f;
+      }
+
+      body h1 {
+        font-size: 28px;
+      }
+
+      .ticket {
+        width: 900px !important;
+        height: 250px !important;
+
+        border: 0px solid #02012b;
+        background-image: linear-gradient(180deg, #fbdea7, #facb5b);
+      }
+
+      #gong-xi-fa-cai {
+        width: 100px;
+      }
+
+      #front-img {
+        width: 322px;
+        border-radius: 4px;
+      }
+
+      #ticket-details {
+        position: absolute;
+        top: 10%;
+        left: 18%;
+      }
+
+      #lucky-cover {
+        width: 800px;
+      }
+
+      #ticket-back {
+        color: #fae59f;
+      }
+
+      #ticket-rule-container {
+        width: 800px;
+        height: 250px;
+
+        background-image: linear-gradient(
+          to right,
+          #ba141f,
+          #db1215,
+          #ce141a,
+          #b01d20
+        );
+      }
+    </style>
+    <div id="ticket-container" class="container-fluid">
+      <div
+        id="ticket-details"
+        class="d-flex flex-column justify-content-between"
+      >
+        <div class="ticket card shadow mb-5" id="ticket-front">
+          <div class="d-flex">
+            <img
+              id="front-img"
+              src="https://mpdw-mail-resources.s3.ap-southeast-1.amazonaws.com/lucky.jpg"
+            />
+            <div class="d-flex flex-column align-items-center" id="lucky-cover">
+              <h2 class="mt-4">Lucky Draw Ticket</h2>
+
+              <h1>(chao.wu)</h1>
+
+              <h1 class="mt-4" style="font-size: 40px">Lucky Number: 1326</h1>
+
+              <h5 class="mt-1">Draw Day: 30 January 2023</h5>
+            </div>
+          </div>
+        </div>
+        <div class="ticket card shadow" id="ticket-back">
+          <div class="d-flex">
+            <div
+              id="gong-xi-fa-cai"
+              class="d-flex flex-column justify-content-between align-items-center"
+            >
+              <h1
+                style="
+                  color: #ce141a;
+                  writing-mode: vertical-lr;
+                  font-size: 34px;
+                  word-spacing: 10px;
+                  margin-top: 30px;
+                "
+              >
+                恭 喜 发 财
+              </h1>
+            </div>
+            <div
+              id="ticket-rule-container"
+              class="d-flex flex-column justify-content-start align-items-center"
+            >
+              <h1 class="mt-2">Rules</h1>
+              <div
+                class="d-flex flex-column justify-content-between align-items-start container"
+                style="padding: 0px 100px;"
+              >
+                <p>1. You are assigned a 4-digit lucky number based on the hash of registration time</p>
+                <p>2. All lucky numbers are collated into the pool for drawing</p>
+                <p>3. Each participant can only be drawn once and removed from the drawing pool</p>
+                <p>4. The drawing pool will be randomly shuffled before each draw</p>
+                <p>5. That is all and good luck and wish you a happy new year ahead</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </body>
 </html>
