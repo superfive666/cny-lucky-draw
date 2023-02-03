@@ -1,3 +1,277 @@
 <script>
+  (function () {
+    const spinning = "25s";
+    const stopping = 80;
 
+    let participants = [...document.querySelectorAll(".participants")].map(
+      (div) => JSON.parse(div.innerHTML)
+    );
+    let winners = [];
+    let running = false;
+    let stopp = false;
+    let radius = 3000;
+    let eps = 0.02;
+    let startTime = new Date().getTime();
+    let runtime = 0;
+
+    document.querySelector("#start").addEventListener("click", start);
+    document.querySelector("#stop").addEventListener("click", stop);
+
+    start();
+
+    function start() {
+      // orchestrate the draw process to kick start, and prevent double starting
+      if (running) {
+        return;
+      }
+      running = true;
+      shuffle();
+
+      document.querySelectorAll(".ring").forEach((x) => {
+        x.style.animationDuration = spinning;
+        x.style.WebkitAnimationDuration = spinning;
+        x.style.animationPlayState = "running";
+      });
+
+      startTime = new Date().getTime();
+    }
+
+    async function stop() {
+      // orchestrate the draw process to stop, and prevent double stopping
+      if (!running || stopp) {
+        return;
+      }
+      stopp = true;
+
+      const endTime = new Date().getTime();
+      runtime += endTime - startTime;
+      console.log("Number of participants left", participants.length);
+      const delta =
+        ((runtime / 1000 / (stopping * 1.0)) * participants.length) % 1;
+
+      const delay =
+        (Math.floor(Math.random() * 6 + 4) - delta) *
+        ((stopping * 1.0) / participants.length) *
+        1000;
+
+      document.querySelectorAll(".ring").forEach((x) => {
+        x.style.animationDuration = `${stopping}s`;
+        x.style.WebkitAnimationDuration = `${stopping}s`;
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, delay));
+
+      document.querySelectorAll(".ring").forEach((x) => {
+        x.style.animationPlayState = "paused";
+      });
+
+      setTimeout(confetti.start, 100);
+      setTimeout(confetti.stop, 5100);
+
+      runtime += delay;
+      const winner = await getWinner();
+      winners.push(winner);
+      constructWinners();
+
+      stopp = false;
+      running = false;
+    }
+
+    function constructWinners() {
+      const prg = document.getElementById("lucky-progress");
+      const pct = `${Math.floor((winners.length * 100) / 10)}%`;
+      prg.innerHTML = pct;
+      prg.style.width = pct;
+
+      const container = document.getElementById("winners-container");
+      container.textContent = "";
+
+      for (winner of winners) {
+        const winnerDiv = document.createElement("div");
+        winnerDiv.role = "alert";
+        winnerDiv.classList.add("alert");
+        winnerDiv.classList.add("alert-primary");
+        winnerDiv.classList.add("d-flex");
+        winnerDiv.classList.add("align-items-center");
+
+        const num = document.createElement("span");
+        num.classList.add("badge");
+        num.classList.add("bg-success");
+        num.innerHTML = winner.id;
+        winnerDiv.appendChild(num);
+
+        const name = document.createElement("div");
+        name.classList.add("winner-name");
+        name.innerHTML = winner.username;
+        winnerDiv.appendChild(name);
+
+        const btn = document.createElement("button");
+        btn.classList.add("btn-close");
+        btn.type = "button";
+        btn.setAttribute("aria-label", "close");
+        btn.style.marginLeft = "auto";
+        btn.addEventListener("click", function (event) {
+          const idx =
+            event.target.parentElement.querySelector("span").innerHTML;
+          console.log(idx);
+
+          winners = winners.filter((w) => w.id !== parseInt(idx));
+
+          constructWinners();
+        });
+        winnerDiv.appendChild(btn);
+
+        container.appendChild(winnerDiv);
+      }
+    }
+
+    function shuffle() {
+      const shuffled = participants.sort((a, b) => 0.5 - Math.random());
+      const luckies = shuffled.map((sh) => {
+        return extractDigit(sh.id);
+      });
+
+      document.querySelectorAll(".ring").forEach((ring) => {
+        ring.textContent = "";
+      });
+
+      radius = 800 + participants.length * 10.0;
+
+      for (var j = 0; j < luckies.length; j++) {
+        const luck = luckies[j];
+        const rings = document.querySelectorAll(".ring");
+
+        for (var i = 0; i < rings.length; i++) {
+          const pst = document.createElement("div");
+          pst.classList.add("poster");
+          pst.style = `transform: rotateX(${
+            (360.0 / luckies.length) * j
+          }deg) translateZ(${radius}px); animation-play-state: paused`;
+
+          const p = document.createElement("p");
+          p.innerHTML = luck[i];
+          pst.appendChild(p);
+          rings[i].appendChild(pst);
+        }
+      }
+    }
+
+    function extractDigit(num) {
+      const res = new Array(4);
+
+      var i = 3;
+      while (num > 0 && i >= 0) {
+        res[i--] = num % 10;
+        num = Math.floor(num / 10);
+      }
+
+      return res;
+    }
+
+    function getOverlap(div, door) {
+      if (div.y > door.y) {
+        return door.y + door.height - div.y;
+      }
+
+      return div.y + div.height - door.y;
+    }
+
+    async function checkResult() {
+      const posters = [...document.querySelectorAll(".poster")];
+      const door = document.querySelector(".door").getBoundingClientRect();
+
+      let potentialwinners = posters.filter((div) => {
+        const top = div.getBoundingClientRect().height;
+
+        return top > 99.7;
+      });
+
+      let theorydegree = 360.0 - (runtime / 1000.0 / stopping) * 360.0;
+      let tgtdegree = potentialwinners
+        .map((div) => getDegree(div.style.transform))
+        .reduce(
+          (a, b) =>
+            Math.abs(a - theorydegree) > Math.abs(b - theorydegree) ? b : a,
+          Infinity
+        );
+
+      let maxOverlap = potentialwinners
+        .filter((div) => getDegree(div.style.transform) === tgtdegree)
+        .map((div) => getOverlap(div.getBoundingClientRect(), door))
+        .reduce((a, b) => Math.max(a, b), -Infinity);
+      let oldOverlap = maxOverlap;
+
+      while (maxOverlap < 93 && oldOverlap <= maxOverlap) {
+        oldOverlap = maxOverlap;
+        document.querySelectorAll(".ring").forEach((x) => {
+          x.style.animationPlayState = "running";
+        });
+        await new Promise((resolve) => setTimeout(resolve, 0.2));
+        runtime += 0.2;
+        document.querySelectorAll(".ring").forEach((x) => {
+          x.style.animationPlayState = "paused";
+        });
+
+        potentialwinners = posters.filter((div) => {
+          const top = div.getBoundingClientRect().height;
+
+          return top > 99.7;
+        });
+        theorydegree = 360.0 - ((runtime / 1000.0 / stopping) % 1) * 360.0;
+        tgtdegree = potentialwinners
+          .map((div) => getDegree(div.style.transform))
+          .reduce(
+            (a, b) =>
+              Math.abs(a - theorydegree) > Math.abs(b - theorydegree) ? b : a,
+            Infinity
+          );
+
+        maxOverlap = potentialwinners
+          .filter((div) => getDegree(div.style.transform) === tgtdegree)
+          .map((div) => getOverlap(div.getBoundingClientRect(), door))
+          .reduce((a, b) => Math.max(a, b), -Infinity);
+      }
+    }
+
+    async function getWinner() {
+      const posters = [...document.querySelectorAll(".poster")];
+      await checkResult();
+
+      const potentialwinners = posters.filter((div) => {
+        const top = div.getBoundingClientRect().height;
+
+        return top > 99.7;
+      });
+      const theorydegree = 360.0 - ((runtime / 1000.0 / stopping) % 1) * 360.0;
+      const tgtdegree = potentialwinners
+        .map((div) => getDegree(div.style.transform))
+        .reduce(
+          (a, b) =>
+            Math.abs(a - theorydegree) > Math.abs(b - theorydegree) ? b : a,
+          Infinity
+        );
+
+      console.log(tgtdegree);
+
+      const winner = potentialwinners
+        .filter((div) => getDegree(div.style.transform) === tgtdegree)
+        .map((div) => div.querySelector("p").innerHTML)
+        .join("");
+
+      const winnerId = parseInt(winner);
+
+      // extract the winner from participants
+      const res = participants.filter((p) => p.id === winnerId)[0];
+
+      // remove participants from the list
+      participants = participants.filter((p) => p.id !== winnerId);
+
+      return res;
+    }
+
+    function getDegree(st) {
+      const matches = st.match(/\((.*?)\)/);
+      return parseFloat(matches[1].substr(0, matches[1].length - 3));
+    }
+  })();
 </script>

@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <base target="_top" />
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <style>
+      body {
+        width: 100vw;
+        height: 100vh;
+        margin: 0;
+        padding: 0;
+      }
+
+      .main {
+        width: 100%;
+        height: 100%;
+      }
+
+      #winners-container {
+        max-height: 88vh;
+        overflow-y: auto;
+      }
+
+      .winner-name {
+        margin-left: 20px;
+      }
+
+      #app {
+        width: 100%;
+        height: 100%;
+        background: #1a2b45;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .doors {
+        display: flex;
+      }
+
+      .door {
+        background: #fafafa;
+        width: 100px;
+        height: 100px;
+        overflow: hidden;
+        border-radius: 5px;
+        margin: 5px;
+      }
+
+      .boxes {
+        /* transform: translateY(0); */
+        transition: transform 1s ease-in-out;
+      }
+
+      .box {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 3rem;
+      }
+
+      .buttons {
+        margin: 1rem 0 2rem 0;
+      }
+
+      button {
+        cursor: pointer;
+        font-size: 1.2rem;
+        margin: 0 0.2rem;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 15px;
+      }
+
+      .info {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        text-align: center;
+      }
+
+      #stage {
+        margin: 150px auto;
+        width: 600px;
+        height: 400px;
+        -webkit-perspective: 800;
+      }
+
+      .rotate {
+        margin-left: -250px;
+        width: 600px;
+        height: 400px;
+        /* Ensure that we're in 3D space */
+        -webkit-transform-style: preserve-3d;
+      }
+
+      .ring {
+        margin: 0 auto;
+        height: 110px;
+        width: 600px;
+        transform-style: preserve-3d;
+        animation-iteration-count: infinite;
+        animation-timing-function: linear;
+        animation-name: x-spin;
+        animation-play-state: paused;
+        animation-duration: 1s;
+      }
+
+      .ring > :nth-child(odd) {
+        background-color: #fafafa;
+      }
+
+      .ring > :nth-child(even) {
+        background-color: #fafafa;
+      }
+
+      .poster {
+        position: absolute;
+        left: 250px;
+        width: 100px;
+        height: 100px;
+        opacity: 1;
+        color: rgba(0, 0, 0, 0.9);
+        -webkit-border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .poster > p {
+        font-size: 50px;
+        font-weight: bold;
+        text-align: center;
+        margin-top: 16px;
+      }
+
+      @-webkit-keyframes x-spin {
+        0% {
+          -webkit-transform: rotateX(0deg);
+        }
+        50% {
+          -webkit-transform: rotateX(180deg);
+        }
+        100% {
+          -webkit-transform: rotateX(360deg);
+        }
+      }
+    </style>
+
+    <script>
+      var confetti = {
+        maxCount: 150, //set max confetti count
+        speed: 2, //set the particle animation speed
+        frameInterval: 15, //the confetti animation frame interval in milliseconds
+        alpha: 1.0, //the alpha opacity of the confetti (between 0 and 1, where 1 is opaque and 0 is invisible)
+        gradient: false, //whether to use gradients for the confetti particles
+        start: null, //call to start confetti animation (with optional timeout in milliseconds, and optional min and max random confetti count)
+        stop: null, //call to stop adding confetti
+        toggle: null, //call to start or stop the confetti animation depending on whether it's already running
+        pause: null, //call to freeze confetti animation
+        resume: null, //call to unfreeze confetti animation
+        togglePause: null, //call to toggle whether the confetti animation is paused
+        remove: null, //call to stop the confetti animation and remove all confetti immediately
+        isPaused: null, //call and returns true or false depending on whether the confetti animation is paused
+        isRunning: null, //call and returns true or false depending on whether the animation is running
+      };
+
+      (function () {
+        confetti.start = startConfetti;
+        confetti.stop = stopConfetti;
+        confetti.toggle = toggleConfetti;
+        confetti.pause = pauseConfetti;
+        confetti.resume = resumeConfetti;
+        confetti.togglePause = toggleConfettiPause;
+        confetti.isPaused = isConfettiPaused;
+        confetti.remove = removeConfetti;
+        confetti.isRunning = isConfettiRunning;
+        var supportsAnimationFrame =
+          window.requestAnimationFrame ||
+          window.webkitRequestAnimationFrame ||
+          window.mozRequestAnimationFrame ||
+          window.oRequestAnimationFrame ||
+          window.msRequestAnimationFrame;
+        var colors = [
+          "rgba(30,144,255,",
+          "rgba(107,142,35,",
+          "rgba(255,215,0,",
+          "rgba(255,192,203,",
+          "rgba(106,90,205,",
+          "rgba(173,216,230,",
+          "rgba(238,130,238,",
+          "rgba(152,251,152,",
+          "rgba(70,130,180,",
+          "rgba(244,164,96,",
+          "rgba(210,105,30,",
+          "rgba(220,20,60,",
+        ];
+        var streamingConfetti = false;
+        var animationTimer = null;
+        var pause = false;
+        var lastFrameTime = Date.now();
+        var particles = [];
+        var waveAngle = 0;
+        var context = null;
+
+        function resetParticle(particle, width, height) {
+          particle.color =
+            colors[(Math.random() * colors.length) | 0] +
+            (confetti.alpha + ")");
+          particle.color2 =
+            colors[(Math.random() * colors.length) | 0] +
+            (confetti.alpha + ")");
+          particle.x = Math.random() * width;
+          particle.y = Math.random() * height - height;
+          particle.diameter = Math.random() * 10 + 5;
+          particle.tilt = Math.random() * 10 - 10;
+          particle.tiltAngleIncrement = Math.random() * 0.07 + 0.05;
+          particle.tiltAngle = Math.random() * Math.PI;
+          return particle;
+        }
+
+        function toggleConfettiPause() {
+          if (pause) resumeConfetti();
+          else pauseConfetti();
+        }
+
+        function isConfettiPaused() {
+          return pause;
+        }
+
+        function pauseConfetti() {
+          pause = true;
+        }
+
+        function resumeConfetti() {
+          pause = false;
+          runAnimation();
+        }
+
+        function runAnimation() {
+          if (pause) return;
+          else if (particles.length === 0) {
+            context.clearRect(0, 0, window.innerWidth, window.innerHeight);
+            animationTimer = null;
+          } else {
+            var now = Date.now();
+            var delta = now - lastFrameTime;
+            if (!supportsAnimationFrame || delta > confetti.frameInterval) {
+              context.clearRect(0, 0, window.innerWidth, window.innerHeight);
+              updateParticles();
+              drawParticles(context);
+              lastFrameTime = now - (delta % confetti.frameInterval);
+            }
+            animationTimer = requestAnimationFrame(runAnimation);
+          }
+        }
+
+        function startConfetti(timeout, min, max) {
+          var width = window.innerWidth;
+          var height = window.innerHeight;
+          window.requestAnimationFrame = (function () {
+            return (
+              window.requestAnimationFrame ||
+              window.webkitRequestAnimationFrame ||
+              window.mozRequestAnimationFrame ||
+              window.oRequestAnimationFrame ||
+              window.msRequestAnimationFrame ||
+              function (callback) {
+                return window.setTimeout(callback, confetti.frameInterval);
+              }
+            );
+          })();
+          var canvas = document.getElementById("confetti-canvas");
+          if (canvas === null) {
+            canvas = document.createElement("canvas");
+            canvas.setAttribute("id", "confetti-canvas");
+            canvas.setAttribute(
+              "style",
+              "display:block;z-index:999999;pointer-events:none;position:fixed;top:0"
+            );
+            document.body.prepend(canvas);
+            canvas.width = width;
+            canvas.height = height;
+            window.addEventListener(
+              "resize",
+              function () {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+              },
+              true
+            );
+            context = canvas.getContext("2d");
+          } else if (context === null) context = canvas.getContext("2d");
+          var count = confetti.maxCount;
+          if (min) {
+            if (max) {
+              if (min == max) count = particles.length + max;
+              else {
+                if (min > max) {
+                  var temp = min;
+                  min = max;
+                  max = temp;
+                }
+                count =
+                  particles.length + ((Math.random() * (max - min) + min) | 0);
+              }
+            } else count = particles.length + min;
+          } else if (max) count = particles.length + max;
+          while (particles.length < count)
+            particles.push(resetParticle({}, width, height));
+          streamingConfetti = true;
+          pause = false;
+          runAnimation();
+          if (timeout) {
+            window.setTimeout(stopConfetti, timeout);
+          }
+        }
+
+        function stopConfetti() {
+          streamingConfetti = false;
+        }
+
+        function removeConfetti() {
+          stop();
+          pause = false;
+          particles = [];
+        }
+
+        function toggleConfetti() {
+          if (streamingConfetti) stopConfetti();
+          else startConfetti();
+        }
+
+        function isConfettiRunning() {
+          return streamingConfetti;
+        }
+
+        function drawParticles(context) {
+          var particle;
+          var x, y, x2, y2;
+          for (var i = 0; i < particles.length; i++) {
+            particle = particles[i];
+            context.beginPath();
+            context.lineWidth = particle.diameter;
+            x2 = particle.x + particle.tilt;
+            x = x2 + particle.diameter / 2;
+            y2 = particle.y + particle.tilt + particle.diameter / 2;
+            if (confetti.gradient) {
+              var gradient = context.createLinearGradient(
+                x,
+                particle.y,
+                x2,
+                y2
+              );
+              gradient.addColorStop("0", particle.color);
+              gradient.addColorStop("1.0", particle.color2);
+              context.strokeStyle = gradient;
+            } else context.strokeStyle = particle.color;
+            context.moveTo(x, particle.y);
+            context.lineTo(x2, y2);
+            context.stroke();
+          }
+        }
+
+        function updateParticles() {
+          var width = window.innerWidth;
+          var height = window.innerHeight;
+          var particle;
+          waveAngle += 0.01;
+          for (var i = 0; i < particles.length; i++) {
+            particle = particles[i];
+            if (!streamingConfetti && particle.y < -15)
+              particle.y = height + 100;
+            else {
+              particle.tiltAngle += particle.tiltAngleIncrement;
+              particle.x += Math.sin(waveAngle) - 0.5;
+              particle.y +=
+                (Math.cos(waveAngle) + particle.diameter + confetti.speed) *
+                0.5;
+              particle.tilt = Math.sin(particle.tiltAngle) * 15;
+            }
+            if (
+              particle.x > width + 20 ||
+              particle.x < -20 ||
+              particle.y > height
+            ) {
+              if (streamingConfetti && particles.length <= confetti.maxCount)
+                resetParticle(particle, width, height);
+              else {
+                particles.splice(i, 1);
+                i--;
+              }
+            }
+          }
+        }
+      })();
+    </script>
+
+    <div class="main row">
+      <div class="col-8">
+        <div id="app">
+          <div class="doors">
+            <div class="door">
+              <div class="rotate">
+                <div class="ring"></div>
+              </div>
+            </div>
+
+            <div class="door">
+              <div class="rotate">
+                <div class="ring"></div>
+              </div>
+            </div>
+
+            <div class="door">
+              <div class="rotate">
+                <div class="ring"></div>
+              </div>
+            </div>
+
+            <div class="door">
+              <div class="rotate">
+                <div class="ring"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="buttons">
+            <button id="stop">Stop</button>
+            <button id="start">Start</button>
+          </div>
+        </div>
+      </div>
+      <div class="col-4 d-flex flex-column">
+        <strong class="mt-4">Lucky Draw Progress</strong>
+        <div class="progress mt-1">
+          <div
+            id="lucky-progress"
+            class="progress-bar progress-bar-striped progress-bar-animated bg-info"
+            role="progressbar"
+            aria-valuenow="75"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            style="width: 0%"
+          >
+            0%
+          </div>
+        </div>
+        <div id="winners-container" class="d-flex flex-column mt-3"></div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const spinning = "25s";
+        const stopping = 80;
+
+        let participants = [];
+        let winners = [];
+        let running = false;
+        let stopp = false;
+        let radius = 3000;
+        let eps = 0.02;
+        let startTime = new Date().getTime();
+        let runtime = 0;
+
+        document.querySelector("#start").addEventListener("click", start);
+        document.querySelector("#stop").addEventListener("click", stop);
+
+        // for mocking only, to be replaced with the real participants
+        mockParticipants();
+        start();
+
+        function start() {
+          // orchestrate the draw process to kick start, and prevent double starting
+          if (running) {
+            return;
+          }
+          running = true;
+          shuffle();
+
+          document.querySelectorAll(".ring").forEach((x) => {
+            x.style.animationDuration = spinning;
+            x.style.WebkitAnimationDuration = spinning;
+            x.style.animationPlayState = "running";
+          });
+
+          startTime = new Date().getTime();
+        }
+
+        // This is for local testing on the UI with mocked participant lists
+        function mockParticipants() {
+          for (var i = 1; i <= 260; i++) {
+            participants.push({
+              id: 1314 + ((i * 149) % (10_000 - 1314)),
+              username: "chao.wu",
+            });
+          }
+        }
+
+        async function stop() {
+          // orchestrate the draw process to stop, and prevent double stopping
+          if (!running || stopp) {
+            return;
+          }
+          stopp = true;
+
+          const endTime = new Date().getTime();
+          runtime += endTime - startTime;
+          console.log("Number of participants left", participants.length);
+          const delta =
+            ((runtime / 1000 / (stopping * 1.0)) * participants.length) % 1;
+
+          const delay =
+            (Math.floor(Math.random() * 6 + 4) - delta) *
+            ((stopping * 1.0) / participants.length) *
+            1000;
+
+          document.querySelectorAll(".ring").forEach((x) => {
+            x.style.animationDuration = `${stopping}s`;
+            x.style.WebkitAnimationDuration = `${stopping}s`;
+          });
+
+          await new Promise((resolve) => setTimeout(resolve, delay));
+
+          document.querySelectorAll(".ring").forEach((x) => {
+            x.style.animationPlayState = "paused";
+          });
+
+          setTimeout(confetti.start, 100);
+          setTimeout(confetti.stop, 5100);
+
+          runtime += delay;
+          const winner = await getWinner();
+          winners.push(winner);
+          constructWinners();
+
+          stopp = false;
+          running = false;
+        }
+
+        function constructWinners() {
+          const prg = document.getElementById("lucky-progress");
+          const pct = `${Math.floor((winners.length * 100) / 10)}%`;
+          prg.innerHTML = pct;
+          prg.style.width = pct;
+
+          const container = document.getElementById("winners-container");
+          container.textContent = "";
+
+          for (winner of winners) {
+            const winnerDiv = document.createElement("div");
+            winnerDiv.role = "alert";
+            winnerDiv.classList.add("alert");
+            winnerDiv.classList.add("alert-primary");
+            winnerDiv.classList.add("d-flex");
+            winnerDiv.classList.add("align-items-center");
+
+            const num = document.createElement("span");
+            num.classList.add("badge");
+            num.classList.add("bg-success");
+            num.innerHTML = winner.id;
+            winnerDiv.appendChild(num);
+
+            const name = document.createElement("div");
+            name.classList.add("winner-name");
+            name.innerHTML = winner.username;
+            winnerDiv.appendChild(name);
+
+            const btn = document.createElement("button");
+            btn.classList.add("btn-close");
+            btn.type = "button";
+            btn.setAttribute("aria-label", "close");
+            btn.style.marginLeft = "auto";
+            btn.addEventListener("click", function (event) {
+              const idx =
+                event.target.parentElement.querySelector("span").innerHTML;
+              console.log(idx);
+
+              winners = winners.filter((w) => w.id !== parseInt(idx));
+
+              constructWinners();
+            });
+            winnerDiv.appendChild(btn);
+
+            container.appendChild(winnerDiv);
+          }
+        }
+
+        function shuffle() {
+          const shuffled = participants.sort((a, b) => 0.5 - Math.random());
+          const luckies = shuffled.map((sh) => {
+            return extractDigit(sh.id);
+          });
+
+          document.querySelectorAll(".ring").forEach((ring) => {
+            ring.textContent = "";
+          });
+
+          radius = 800 + participants.length * 10.0;
+
+          for (var j = 0; j < luckies.length; j++) {
+            const luck = luckies[j];
+            const rings = document.querySelectorAll(".ring");
+
+            for (var i = 0; i < rings.length; i++) {
+              const pst = document.createElement("div");
+              pst.classList.add("poster");
+              pst.style = `transform: rotateX(${
+                (360.0 / luckies.length) * j
+              }deg) translateZ(${radius}px); animation-play-state: paused`;
+
+              const p = document.createElement("p");
+              p.innerHTML = luck[i];
+              pst.appendChild(p);
+              rings[i].appendChild(pst);
+            }
+          }
+        }
+
+        function extractDigit(num) {
+          const res = new Array(4);
+
+          var i = 3;
+          while (num > 0 && i >= 0) {
+            res[i--] = num % 10;
+            num = Math.floor(num / 10);
+          }
+
+          return res;
+        }
+
+        function getOverlap(div, door) {
+          if (div.y > door.y) {
+            return door.y + door.height - div.y;
+          }
+
+          return div.y + div.height - door.y;
+        }
+
+        async function checkResult() {
+          const posters = [...document.querySelectorAll(".poster")];
+          const door = document.querySelector(".door").getBoundingClientRect();
+
+          let potentialwinners = posters.filter((div) => {
+            const top = div.getBoundingClientRect().height;
+
+            return top > 99.7;
+          });
+
+          let theorydegree = 360.0 - (runtime / 1000.0 / stopping) * 360.0;
+          let tgtdegree = potentialwinners
+            .map((div) => getDegree(div.style.transform))
+            .reduce(
+              (a, b) =>
+                Math.abs(a - theorydegree) > Math.abs(b - theorydegree) ? b : a,
+              Infinity
+            );
+
+          let maxOverlap = potentialwinners
+            .filter((div) => getDegree(div.style.transform) === tgtdegree)
+            .map((div) => getOverlap(div.getBoundingClientRect(), door))
+            .reduce((a, b) => Math.max(a, b), -Infinity);
+          let oldOverlap = maxOverlap;
+
+          while (maxOverlap < 93 && oldOverlap <= maxOverlap) {
+            oldOverlap = maxOverlap;
+            document.querySelectorAll(".ring").forEach((x) => {
+              x.style.animationPlayState = "running";
+            });
+            await new Promise((resolve) => setTimeout(resolve, 0.2));
+            runtime += 0.2;
+            document.querySelectorAll(".ring").forEach((x) => {
+              x.style.animationPlayState = "paused";
+            });
+
+            potentialwinners = posters.filter((div) => {
+              const top = div.getBoundingClientRect().height;
+
+              return top > 99.7;
+            });
+            theorydegree = 360.0 - ((runtime / 1000.0 / stopping) % 1) * 360.0;
+            tgtdegree = potentialwinners
+              .map((div) => getDegree(div.style.transform))
+              .reduce(
+                (a, b) =>
+                  Math.abs(a - theorydegree) > Math.abs(b - theorydegree)
+                    ? b
+                    : a,
+                Infinity
+              );
+
+            maxOverlap = potentialwinners
+              .filter((div) => getDegree(div.style.transform) === tgtdegree)
+              .map((div) => getOverlap(div.getBoundingClientRect(), door))
+              .reduce((a, b) => Math.max(a, b), -Infinity);
+          }
+        }
+
+        async function getWinner() {
+          const posters = [...document.querySelectorAll(".poster")];
+          await checkResult();
+
+          const potentialwinners = posters.filter((div) => {
+            const top = div.getBoundingClientRect().height;
+
+            return top > 99.7;
+          });
+          const theorydegree =
+            360.0 - ((runtime / 1000.0 / stopping) % 1) * 360.0;
+          const tgtdegree = potentialwinners
+            .map((div) => getDegree(div.style.transform))
+            .reduce(
+              (a, b) =>
+                Math.abs(a - theorydegree) > Math.abs(b - theorydegree) ? b : a,
+              Infinity
+            );
+
+          console.log(tgtdegree);
+
+          const winner = potentialwinners
+            .filter((div) => getDegree(div.style.transform) === tgtdegree)
+            .map((div) => div.querySelector("p").innerHTML)
+            .join("");
+
+          const winnerId = parseInt(winner);
+
+          // extract the winner from participants
+          const res = participants.filter((p) => p.id === winnerId)[0];
+
+          // remove participants from the list
+          participants = participants.filter((p) => p.id !== winnerId);
+
+          return res;
+        }
+
+        function getDegree(st) {
+          const matches = st.match(/\((.*?)\)/);
+          return parseFloat(matches[1].substr(0, matches[1].length - 3));
+        }
+      })();
+    </script>
+  </body>
+</html>

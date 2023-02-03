@@ -7,7 +7,7 @@ function doGet() {
 }
 
 function getHash(id){
-  return 1231 + 23 * id;
+  return 1314 + (id * 149) % (10_000 - 1314);
 }
 
 function register() {

@@ -7,7 +7,7 @@ function doGet() {
 }
 
 function getHash(id){
-  return 1231 + 23 * id;
+  return 1314 + (id * 149) % (10_000 - 1314);
 }
 
 function register() {
@@ -42,7 +42,7 @@ function register() {
   const hash = getHash(id);
   console.log(`${username} registered with number: ${hash}`)
 
-  return hash;
+  return {username, hash};
 }
 
 function fetchParticipants() {

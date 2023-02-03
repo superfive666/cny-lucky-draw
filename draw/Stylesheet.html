@@ -1,3 +1,144 @@
 <style>
+  body {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+  }
 
+  .main {
+    width: 100%;
+    height: 100%;
+  }
+
+  #winners-container {
+    max-height: 88vh;
+    overflow-y: auto;
+  }
+
+  .winner-name {
+    margin-left: 20px;
+  }
+
+  #app {
+    width: 100%;
+    height: 100%;
+    background: #1a2b45;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .doors {
+    display: flex;
+  }
+
+  .door {
+    background: #fafafa;
+    width: 100px;
+    height: 100px;
+    overflow: hidden;
+    border-radius: 5px;
+    margin: 5px;
+  }
+
+  .boxes {
+    /* transform: translateY(0); */
+    transition: transform 1s ease-in-out;
+  }
+
+  .box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 3rem;
+  }
+
+  .buttons {
+    margin: 1rem 0 2rem 0;
+  }
+
+  button {
+    cursor: pointer;
+    font-size: 1.2rem;
+    margin: 0 0.2rem;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 15px;
+  }
+
+  .info {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+  }
+
+  #stage {
+    margin: 150px auto;
+    width: 600px;
+    height: 400px;
+    -webkit-perspective: 800;
+  }
+
+  .rotate {
+    margin-left: -250px;
+    width: 600px;
+    height: 400px;
+    /* Ensure that we're in 3D space */
+    -webkit-transform-style: preserve-3d;
+  }
+
+  .ring {
+    margin: 0 auto;
+    height: 110px;
+    width: 600px;
+    transform-style: preserve-3d;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+    animation-name: x-spin;
+    animation-play-state: paused;
+    animation-duration: 1s;
+  }
+
+  .ring > :nth-child(odd) {
+    background-color: #fafafa;
+  }
+
+  .ring > :nth-child(even) {
+    background-color: #fafafa;
+  }
+
+  .poster {
+    position: absolute;
+    left: 250px;
+    width: 100px;
+    height: 100px;
+    opacity: 1;
+    color: rgba(0, 0, 0, 0.9);
+    -webkit-border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .poster > p {
+    font-size: 50px;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 16px;
+  }
+
+  @-webkit-keyframes x-spin {
+    0% {
+      -webkit-transform: rotateX(0deg);
+    }
+    50% {
+      -webkit-transform: rotateX(180deg);
+    }
+    100% {
+      -webkit-transform: rotateX(360deg);
+    }
+  }
 </style>
