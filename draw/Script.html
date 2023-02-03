@@ -10,7 +10,7 @@
     let running = false;
     let stopp = false;
     let radius = 3000;
-    let eps = 0.02;
+    let eps = 0.03;
     let startTime = new Date().getTime();
     let runtime = 0;
 
@@ -50,7 +50,7 @@
         ((runtime / 1000 / (stopping * 1.0)) * participants.length) % 1;
 
       const delay =
-        (Math.floor(Math.random() * 6 + 4) - delta) *
+        (Math.floor(Math.random() * 6 + 4) - delta - eps) *
         ((stopping * 1.0) / participants.length) *
         1000;
 
@@ -79,14 +79,14 @@
 
     function constructWinners() {
       const prg = document.getElementById("lucky-progress");
-      const pct = `${Math.floor((winners.length * 100) / 10)}%`;
+      const pct = `${Math.floor((winners.length * 100) / 15.0)}%`;
       prg.innerHTML = pct;
       prg.style.width = pct;
 
       const container = document.getElementById("winners-container");
       container.textContent = "";
 
-      for (winner of winners) {
+      for (winner of [...winners].reverse()) {
         const winnerDiv = document.createElement("div");
         winnerDiv.role = "alert";
         winnerDiv.classList.add("alert");
